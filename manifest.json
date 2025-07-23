@@ -1,7 +1,7 @@
 {
   "name": "GitHub Copilot",
   "short_name": "Copilot",
-  "start_url": "./",
+  "start_url": "https://github.com/githubnext/copilot",
   "display": "standalone",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
