@@ -9,96 +9,63 @@
     <meta name="theme-color" content="#0d1117">
     <link rel="manifest" href="manifest.json">
     <style>
-      body { 
+      body, html { 
         margin: 0; 
-        background: #0d1117; 
+        padding: 0; 
+        height: 100%; 
+        overflow: hidden;
+        background: #0d1117;
+      }
+      iframe { 
+        width: 100%; 
+        height: 100%; 
+        border: none; 
+        display: block;
+      }
+      .loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
         text-align: center;
-        padding: 20px;
-        box-sizing: border-box;
+        z-index: 1000;
       }
-      .logo { font-size: 48px; margin-bottom: 20px; }
-      .button {
-        background: #238636;
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 6px;
-        font-size: 16px;
-        cursor: pointer;
-        margin: 10px;
-        text-decoration: none;
-        display: inline-block;
-      }
-      .button:hover { background: #2ea043; }
-      .install-prompt { margin: 20px 0; }
-      .countdown { font-size: 14px; color: #7d8590; margin-top: 20px; }
+      .loading.hidden { display: none; }
     </style>
   </head>
   <body>
-    <div class="logo">🤖</div>
-    <h1>GitHub Copilot</h1>
-    
-    <div class="install-prompt" id="installPrompt">
-      <p>Install this app for the best experience!</p>
-      <button class="button" onclick="skipToRedirect()">Skip & Continue</button>
+    <div class="loading" id="loading">
+      <div style="font-size: 48px; margin-bottom: 20px;">🤖</div>
+      <h2>Loading GitHub Copilot...</h2>
     </div>
     
-    <div class="countdown" id="countdown">Auto-redirecting in <span id="timer">10</span> seconds...</div>
+    <iframe 
+      id="copilotFrame"
+      src="https://github.com/copilot" 
+      allowfullscreen
+      allow="camera; microphone; geolocation"
+      style="opacity: 0; transition: opacity 0.3s;">
+    </iframe>
     
     <script>
-      let timeLeft = 10;
-      let countdownInterval;
-      let hasBeenInstalled = false;
-
-      // Check if running as PWA
-      function isPWA() {
-        return window.matchMedia('(display-mode: standalone)').matches || 
-               window.navigator.standalone === true;
-      }
-
-      // If already installed as PWA, redirect immediately
-      if (isPWA()) {
-        window.location.replace('https://github.com/copilot');
-      }
-
-      // Listen for app installation
-      window.addEventListener('appinstalled', () => {
-        hasBeenInstalled = true;
-        document.getElementById('installPrompt').innerHTML = 
-          '<p>✅ App installed! Redirecting...</p>';
+      const iframe = document.getElementById('copilotFrame');
+      const loading = document.getElementById('loading');
+      
+      // Hide loading screen when iframe loads
+      iframe.onload = function() {
         setTimeout(() => {
-          window.location.replace('https://github.com/copilot');
-        }, 2000);
-      });
-
-      // Countdown timer
-      function updateCountdown() {
-        document.getElementById('timer').textContent = timeLeft;
-        timeLeft--;
-        
-        if (timeLeft < 0) {
-          clearInterval(countdownInterval);
-          if (!hasBeenInstalled) {
-            window.location.replace('https://github.com/copilot');
-          }
-        }
-      }
-
-      function skipToRedirect() {
-        clearInterval(countdownInterval);
-        window.location.replace('https://github.com/copilot');
-      }
-
-      // Start countdown
-      countdownInterval = setInterval(updateCountdown, 1000);
-      updateCountdown(); // Initial call
+          loading.classList.add('hidden');
+          iframe.style.opacity = '1';
+        }, 1000);
+      };
+      
+      // Fallback: hide loading after 5 seconds regardless
+      setTimeout(() => {
+        loading.classList.add('hidden');
+        iframe.style.opacity = '1';
+      }, 5000);
     </script>
   </body>
 </html>
