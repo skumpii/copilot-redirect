@@ -1,9 +1,9 @@
 {
   "name": "GitHub Copilot",
   "short_name": "GitCopilot",
-  "start_url": "/copilot.html",
+  "start_url": "https://github.com/copilot",
   "display": "standalone",
-  "scope": "/",
+  "scope": "https://github.com/",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
   "icons": [
