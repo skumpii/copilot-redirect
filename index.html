@@ -54,12 +54,152 @@
       }
 
       function redirectToCopilot() {
+        // Store cleanup preferences for the redirect
+        storeCleanupPreferences();
+        
+        // Create a more direct GitHub Copilot URL that might avoid the conversation bar
+        const copilotUrl = buildCleanCopilotUrl();
+        
         // Try opening in the same tab but with intent to minimize browser UI
         try {
-          window.location.href = 'https://github.com/copilot';
+          window.location.href = copilotUrl;
         } catch (e) {
-          window.open('https://github.com/copilot', '_self');
+          window.open(copilotUrl, '_self');
         }
+      }
+
+      function buildCleanCopilotUrl() {
+        // Try different GitHub Copilot URLs that might provide cleaner interface
+        const baseUrl = 'https://github.com/copilot';
+        const params = new URLSearchParams();
+        
+        // Add parameters that might control GitHub's UI
+        params.set('tab', 'chat');
+        params.set('embedded', 'true');
+        params.set('minimal', 'true');
+        params.set('hide_header', 'true');
+        params.set('pwa', 'true');
+        
+        return `${baseUrl}?${params.toString()}`;
+      }
+
+      function storeCleanupPreferences() {
+        // Store cleanup CSS in localStorage and sessionStorage for persistence
+        const cleanupCSS = `
+          /* Hide GitHub's "X New Conversation" bar and related UI elements */
+          [data-testid="new-conversation-banner"],
+          [data-testid="copilot-banner"],
+          .js-new-conversation-banner,
+          .conversation-banner,
+          .copilot-conversation-banner,
+          .notification-banner,
+          .flash-banner,
+          .global-banner,
+          .top-banner,
+          [class*="conversation-banner"],
+          [class*="ConversationBanner"],
+          [class*="NotificationBanner"],
+          [aria-label*="conversation"],
+          [aria-label*="New conversation"],
+          .Header-item--full-width {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
+          }
+          
+          /* Clean up top spacing */
+          body {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+          }
+          
+          .AppHeader,
+          .Header {
+            border-bottom: none !important;
+          }
+          
+          /* Hide specific GitHub header items that might contain conversation bar */
+          .AppHeader .Header-item:has([data-testid*="conversation"]),
+          .AppHeader .Header-item:has([class*="conversation"]) {
+            display: none !important;
+          }
+        `;
+        
+        localStorage.setItem('copilot-pwa-cleanup', 'true');
+        localStorage.setItem('copilot-pwa-cleanup-css', cleanupCSS);
+        sessionStorage.setItem('copilot-pwa-cleanup', 'true');
+        sessionStorage.setItem('copilot-pwa-cleanup-css', cleanupCSS);
+        
+        // Set a flag to indicate this is a PWA redirect
+        localStorage.setItem('copilot-pwa-source', window.location.origin);
+        
+        // Inject a script element that will be available on redirect
+        const script = document.createElement('script');
+        script.textContent = `
+          (function() {
+            if (localStorage.getItem('copilot-pwa-cleanup') === 'true') {
+              const style = document.createElement('style');
+              style.id = 'copilot-pwa-cleanup-style';
+              style.textContent = localStorage.getItem('copilot-pwa-cleanup-css');
+              
+              if (document.head) {
+                document.head.appendChild(style);
+              } else {
+                document.addEventListener('DOMContentLoaded', () => {
+                  document.head.appendChild(style);
+                });
+              }
+              
+              // Remove elements via DOM manipulation
+              const cleanupDOM = () => {
+                const selectors = [
+                  '[data-testid="new-conversation-banner"]',
+                  '[data-testid="copilot-banner"]',
+                  '.js-new-conversation-banner',
+                  '.conversation-banner',
+                  '.copilot-conversation-banner',
+                  '.notification-banner',
+                  '[class*="conversation-banner"]',
+                  '[class*="ConversationBanner"]',
+                  '[aria-label*="conversation"]',
+                  '[aria-label*="New conversation"]'
+                ].join(', ');
+                
+                const elements = document.querySelectorAll(selectors);
+                elements.forEach(el => {
+                  el.style.display = 'none';
+                  el.style.visibility = 'hidden';
+                  el.remove();
+                });
+              };
+              
+              // Run cleanup immediately and on DOM changes
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', cleanupDOM);
+              } else {
+                cleanupDOM();
+              }
+              
+              // Use MutationObserver to catch dynamically added elements
+              const observer = new MutationObserver(cleanupDOM);
+              observer.observe(document.body || document.documentElement, {
+                childList: true,
+                subtree: true
+              });
+              
+              // Cleanup after 30 seconds to avoid indefinite observation
+              setTimeout(() => observer.disconnect(), 30000);
+            }
+          })();
+        `;
+        
+        // Try to inject this script in a way that persists
+        document.head.appendChild(script);
       }
 
       // If already in PWA mode, auto-redirect with delay
@@ -67,6 +207,43 @@
         document.getElementById('content').innerHTML = 
           '<p>Launching GitHub Copilot...</p>';
         setTimeout(redirectToCopilot, 2000);
+      }
+
+      // Apply cleanup if we're already on GitHub (in case of back navigation)
+      if (window.location.hostname.includes('github.com')) {
+        applyCleanupOnGitHub();
+      }
+
+      function applyCleanupOnGitHub() {
+        // This function runs when we're already on GitHub domain
+        const cleanupCSS = localStorage.getItem('copilot-pwa-cleanup-css');
+        if (cleanupCSS) {
+          const style = document.createElement('style');
+          style.id = 'copilot-pwa-cleanup-style';
+          style.textContent = cleanupCSS;
+          document.head.appendChild(style);
+          
+          // Direct DOM cleanup
+          const cleanupElements = () => {
+            const selectors = [
+              '[data-testid="new-conversation-banner"]',
+              '[data-testid="copilot-banner"]',
+              '.js-new-conversation-banner',
+              '.conversation-banner',
+              '.copilot-conversation-banner',
+              '.notification-banner',
+              '[class*="conversation-banner"]',
+              '[class*="ConversationBanner"]'
+            ];
+            
+            selectors.forEach(selector => {
+              document.querySelectorAll(selector).forEach(el => el.remove());
+            });
+          };
+          
+          cleanupElements();
+          setInterval(cleanupElements, 2000); // Re-check every 2 seconds
+        }
       }
     </script>
   </body>
