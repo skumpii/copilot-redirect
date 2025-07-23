@@ -43,7 +43,7 @@
     
     <div id="content">
       <p>Install this app for the best experience!</p>
-      <button class="button" onclick="openCopilot()">Launch Copilot</button>
+      <button class="button" onclick="redirectToCopilot()">Continue to Copilot</button>
     </div>
     
     <script>
@@ -53,40 +53,20 @@
                document.referrer.includes('android-app://');
       }
 
-      function openCopilot() {
-        // Try different methods to minimize browser UI
+      function redirectToCopilot() {
+        // Try opening in the same tab but with intent to minimize browser UI
         try {
-          // Method 1: Try to open with specific window features
-          const popup = window.open(
-            'https://github.com/copilot', 
-            'copilot',
-            'width=' + screen.width + ',height=' + screen.height + ',fullscreen=yes,toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes'
-          );
-          
-          if (popup) {
-            // Close the original window after a delay
-            setTimeout(() => {
-              window.close();
-            }, 1000);
-          } else {
-            // Fallback: regular redirect
-            window.location.href = 'https://github.com/copilot';
-          }
-        } catch (e) {
-          // Final fallback
           window.location.href = 'https://github.com/copilot';
+        } catch (e) {
+          window.open('https://github.com/copilot', '_self');
         }
       }
 
-      // If in PWA mode, show auto-launch option
+      // If already in PWA mode, auto-redirect with delay
       if (isPWA()) {
         document.getElementById('content').innerHTML = 
-          '<p>Ready to launch GitHub Copilot</p><button class="button" onclick="openCopilot()">Launch Now</button>';
-        
-        // Auto-launch after 3 seconds
-        setTimeout(() => {
-          openCopilot();
-        }, 3000);
+          '<p>Launching GitHub Copilot...</p>';
+        setTimeout(redirectToCopilot, 2000);
       }
     </script>
   </body>
