@@ -9,63 +9,85 @@
     <meta name="theme-color" content="#0d1117">
     <link rel="manifest" href="manifest.json">
     <style>
-      body, html { 
+      body { 
         margin: 0; 
-        padding: 0; 
-        height: 100%; 
-        overflow: hidden;
-        background: #0d1117;
-      }
-      iframe { 
-        width: 100%; 
-        height: 100%; 
-        border: none; 
-        display: block;
-      }
-      .loading {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
+        background: #0d1117; 
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
         text-align: center;
-        z-index: 1000;
+        padding: 20px;
+        box-sizing: border-box;
       }
-      .loading.hidden { display: none; }
+      .button {
+        background: #238636;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 10px;
+        text-decoration: none;
+        display: inline-block;
+      }
     </style>
   </head>
   <body>
-    <div class="loading" id="loading">
-      <div style="font-size: 48px; margin-bottom: 20px;">🤖</div>
-      <h2>Loading GitHub Copilot...</h2>
+    <div style="font-size: 48px; margin-bottom: 20px;">🤖</div>
+    <h1>GitHub Copilot</h1>
+    
+    <div id="content">
+      <p>Install this app for the best experience!</p>
+      <button class="button" onclick="openCopilot()">Launch Copilot</button>
     </div>
     
-    <iframe 
-      id="copilotFrame"
-      src="https://github.com/copilot" 
-      allowfullscreen
-      allow="camera; microphone; geolocation"
-      style="opacity: 0; transition: opacity 0.3s;">
-    </iframe>
-    
     <script>
-      const iframe = document.getElementById('copilotFrame');
-      const loading = document.getElementById('loading');
-      
-      // Hide loading screen when iframe loads
-      iframe.onload = function() {
+      function isPWA() {
+        return window.matchMedia('(display-mode: standalone)').matches || 
+               window.navigator.standalone === true ||
+               document.referrer.includes('android-app://');
+      }
+
+      function openCopilot() {
+        // Try different methods to minimize browser UI
+        try {
+          // Method 1: Try to open with specific window features
+          const popup = window.open(
+            'https://github.com/copilot', 
+            'copilot',
+            'width=' + screen.width + ',height=' + screen.height + ',fullscreen=yes,toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes'
+          );
+          
+          if (popup) {
+            // Close the original window after a delay
+            setTimeout(() => {
+              window.close();
+            }, 1000);
+          } else {
+            // Fallback: regular redirect
+            window.location.href = 'https://github.com/copilot';
+          }
+        } catch (e) {
+          // Final fallback
+          window.location.href = 'https://github.com/copilot';
+        }
+      }
+
+      // If in PWA mode, show auto-launch option
+      if (isPWA()) {
+        document.getElementById('content').innerHTML = 
+          '<p>Ready to launch GitHub Copilot</p><button class="button" onclick="openCopilot()">Launch Now</button>';
+        
+        // Auto-launch after 3 seconds
         setTimeout(() => {
-          loading.classList.add('hidden');
-          iframe.style.opacity = '1';
-        }, 1000);
-      };
-      
-      // Fallback: hide loading after 5 seconds regardless
-      setTimeout(() => {
-        loading.classList.add('hidden');
-        iframe.style.opacity = '1';
-      }, 5000);
+          openCopilot();
+        }, 3000);
+      }
     </script>
   </body>
 </html>
