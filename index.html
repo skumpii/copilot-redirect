@@ -1,86 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Copilot Launcher (Unofficial)</title>
+<html>
+  <head>
+    <title>GitHub Copilot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0d1117">
+    <link rel="manifest" href="manifest.json">
+    <style>
+      body { 
+        margin: 0; 
+        background: #0d1117; 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      .logo { font-size: 48px; margin-bottom: 20px; }
+      .button {
+        background: #238636;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 10px;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .button:hover { background: #2ea043; }
+      .install-prompt { margin: 20px 0; }
+      .countdown { font-size: 14px; color: #7d8590; margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <div class="logo">🤖</div>
+    <h1>GitHub Copilot</h1>
+    
+    <div class="install-prompt" id="installPrompt">
+      <p>Install this app for the best experience!</p>
+      <button class="button" onclick="skipToRedirect()">Skip & Continue</button>
+    </div>
+    
+    <div class="countdown" id="countdown">Auto-redirecting in <span id="timer">10</span> seconds...</div>
+    
+    <script>
+      let timeLeft = 10;
+      let countdownInterval;
+      let hasBeenInstalled = false;
 
-  <!-- Manifest -->
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#6f42c1" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <link rel="apple-touch-icon" href="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" />
+      // Check if running as PWA
+      function isPWA() {
+        return window.matchMedia('(display-mode: standalone)').matches || 
+               window.navigator.standalone === true;
+      }
 
-  <style>
-    body {
-      background: #1e0033;
-      color: white;
-      font-family: system-ui, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-    }
+      // If already installed as PWA, redirect immediately
+      if (isPWA()) {
+        window.location.replace('https://github.com/copilot');
+      }
 
-    img {
-      width: 96px;
-      height: 96px;
-      margin-bottom: 1em;
-    }
+      // Listen for app installation
+      window.addEventListener('appinstalled', () => {
+        hasBeenInstalled = true;
+        document.getElementById('installPrompt').innerHTML = 
+          '<p>✅ App installed! Redirecting...</p>';
+        setTimeout(() => {
+          window.location.replace('https://github.com/copilot');
+        }, 2000);
+      });
 
-    h1 {
-      font-size: 1.8em;
-      margin-bottom: 0.5em;
-    }
+      // Countdown timer
+      function updateCountdown() {
+        document.getElementById('timer').textContent = timeLeft;
+        timeLeft--;
+        
+        if (timeLeft < 0) {
+          clearInterval(countdownInterval);
+          if (!hasBeenInstalled) {
+            window.location.replace('https://github.com/copilot');
+          }
+        }
+      }
 
-    p {
-      margin: 0.5em 0;
-    }
+      function skipToRedirect() {
+        clearInterval(countdownInterval);
+        window.location.replace('https://github.com/copilot');
+      }
 
-    button {
-      padding: 1em 2em;
-      margin-top: 1.5em;
-      background: #8a63d2;
-      color: white;
-      border: none;
-      border-radius: 0.5em;
-      font-size: 1.2em;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #a078e6;
-    }
-
-    .hack-label {
-      margin-top: 1em;
-      font-size: 0.9em;
-      color: #ccc;
-      opacity: 0.6;
-    }
-  </style>
-</head>
-<body>
-  <div id="dummy">
-    <img src="https://github.githubassets.com/images/modules/site/features/copilot-icon.svg" alt="Copilot Icon" />
-    <h1>GitHub Copilot Launcher</h1>
-    <p>Unofficial custom shortcut</p>
-    <p>Tap ⋮ and "Add to Home screen" to install.</p>
-    <a href="https://github.com/copilot"><button>Launch Copilot</button></a>
-    <div class="hack-label">Modified by you · Not affiliated with GitHub</div>
-  </div>
-
-  <script>
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-                      || window.navigator.standalone === true;
-
-    if (isStandalone) {
-      window.location.href = 'https://github.com/copilot';
-    }
-  </script>
-</body>
+      // Start countdown
+      countdownInterval = setInterval(updateCountdown, 1000);
+      updateCountdown(); // Initial call
+    </script>
+  </body>
 </html>
